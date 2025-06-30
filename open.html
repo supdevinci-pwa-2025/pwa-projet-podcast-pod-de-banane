@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Fichier CSV ouvert</title>
+</head>
+
+<body>
+    <h1>CSV reçu 📂</h1>
+    <p id="file-name">Nom du fichier : ...</p>
+    <pre id="file-content">Contenu du fichier : ...</pre>
+    <div id="unsupported" style="color: red;"></div>
+
+    <script>
+        // On vérifie d'abord si le navigateur comprend launchQueue + files
+        if ('launchQueue' in window && 'files' in LaunchParams.prototype) {
+
+            // Si oui, on dit au navigateur : "quand tu reçois un fichier, appelle cette fonction"
+            launchQueue.setConsumer(async (launchParams) => {
+                // Si jamais la liste est vide, on ne fait rien
+                if (!launchParams.files.length) return;
+
+                // On prend le premier fichier reçu (ici notre CSV)
+                const fileHandle = launchParams.files[0];
+
+                // On déballe le fichier réel à partir de sa "poignée"
+                const file = await fileHandle.getFile();
+                console.log("Fichier reçu :", file); // pour voir dans la console
+
+                // On affiche le nom du fichier sur la page
+                document.getElementById('file-name').textContent = "Nom du fichier : " + file.name;
+
+                // On lit le contenu du fichier sous forme de texte
+                const text = await file.text();
+
+                // Et on affiche le contenu du CSV dans le <pre>
+                document.getElementById('file-content').textContent = text;
+            });
+
+        } else {
+            //  Si le navigateur ne supporte pas cette API, on l'affiche en rouge
+            document.getElementById('unsupported').innerHTML =
+                "🚫 Désolé, File Handling API n'est pas supportée dans ce navigateur.";
+        }
+    </script>
+</body>
+
+</html>
