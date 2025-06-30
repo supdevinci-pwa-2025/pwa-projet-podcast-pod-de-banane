@@ -1,0 +1,19 @@
+{
+    "name": "Pod de banane",
+    "short_name": "PodB",
+    "start_url": "/index.html",
+    "background_color": "#FFFFFF",
+    "theme_color": "#30c885",
+    "orientation": "any",
+    "description": "Application de gestion de podcasts",
+    "categories": ["entertainment", "fun"],
+    "lang": "fr",
+    "id": "/index.html",
+    "scope": "/",
+    "display": "standalone",
+    "dir": "ltr",
+    "display_override": ["standalone", "browser"],
+    "launch_handler": {
+        "client_mode": "auto"
+    }
+}
