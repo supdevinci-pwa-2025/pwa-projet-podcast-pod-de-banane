@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Share Target</title>
+</head>
+
+<body>
+  <h1>Contenu partagé reçu</h1>
+  <div id="output">Chargement...</div>
+
+  <script>
+    (async () => {
+      // Il vous faut récupérer les données envoyées en POST.
+      // ➔ Quel API JS moderne vous permet de faire un appel HTTP, même sur la même page ?
+      const response = await fetch("", { method: "POST" }); // <--- Trou rempli avec 'POST'
+      // ➔ Essayez 'POST'
+
+      // Il faut ensuite extraire les données sous forme de FormData.
+      // ➔ Cherchez une méthode sur l'objet 'Response' qui transforme en formData
+      const formData = await response.formData(); // <--- Trou rempli avec 'formData()'
+      // ➔ Essayez 'formData()'
+
+      const output = document.getElementById("output");
+      output.innerHTML = "";
+
+      // Pour afficher toutes les paires clé-valeur du FormData
+      // ➔ Quelle structure JS permet de parcourir des paires (clé, valeur) ?
+      for (let [key, value] of formData.entries()) { // <--- Trou rempli avec 'formData.entries()'
+        // ➔ Essayez 'formData.entries()'
+        output.innerHTML += `<p><strong>${key}</strong>: ${value}</p>`;
+      }
+    })();
+  </script>
+</body>
+
+</html>
