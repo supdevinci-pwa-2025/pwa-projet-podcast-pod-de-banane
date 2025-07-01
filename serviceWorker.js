@@ -14,6 +14,7 @@ const staticCacheName = "pod-banane-v1";
     "./assets/manifest-icon-512.maskable.png"
   ];
 
+// <!-- INSTALL -->
 self.addEventListener('install', event => { // indice: quand le SW est installé
     console.log(' Service Worker installé');
     
@@ -24,10 +25,10 @@ self.addEventListener('install', event => { // indice: quand le SW est installé
     );
 
     self.skipWaiting( ); // indice: forcer à prendre le contrôle immédiatement
-  });
+});
    
-  // <!-- ACTIVATE -->
-  self.addEventListener('activate', event => { // indice: quand le SW devient actif
+// <!-- ACTIVATE -->
+self.addEventListener('activate', event => { // indice: quand le SW devient actif
     console.log(' Service Worker activé');
 
     event.waitUntil(
@@ -39,11 +40,10 @@ self.addEventListener('install', event => { // indice: quand le SW est installé
     );
 
     self.clients.claim( ); // indice: prendre le contrôle des pages ouvertes
-  });
+});
 
 
-
-  //  FETCH
+// <!-- FETCH -->
 self.addEventListener('fetch', event => {
     const request = event.request;
     const url = new URL(request.url);
