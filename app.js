@@ -69,7 +69,7 @@ navigator.serviceWorker.ready.then(reg => {
     .catch(err => console.error('❌ Erreur sync:', err));
 });
 
-async function syncParticipant() {
+async function syncPodcasts() {
   // Log dans la console pour indiquer le début de la synchronisation
   console.log('🔄 Début de la synchronisation...');
  
