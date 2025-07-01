@@ -50,14 +50,14 @@ self.addEventListener('fetch', event => {
 
     console.log('allo Interception fetch:', request.method, url.pathname);
 
-    if(request.method === "POST" && url.pathname.includes('/api/pod-banane')) {
+    if(request.method === "POST" && url.pathname.includes('/pod-banane')) {
         event.respondWith(handlePodcastSubmission(request));
         return;
     }
 
     if(request.method === "GET" || url.origin !== location.origin) return;
 
-    if(url.pathname === "/" || url.pathname === "./index.html") {
+    if(url.pathname === "/" || url.pathname === "/index.html") {
         event.respondWith(
         caches.match("./index.html").then(res => res || fetch(request).catch(() => caches.match("./offline.html")))
         );
