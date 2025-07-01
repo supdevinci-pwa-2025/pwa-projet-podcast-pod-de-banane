@@ -100,7 +100,7 @@ self.addEventListener('sync', (event) => {
 });
 
 
-async function syncParticipants() {
+async function syncPodcasts() {
     console.log('📡 Début de la synchronisation...');
 
     // 1️⃣ Lire la liste des participants en attente
