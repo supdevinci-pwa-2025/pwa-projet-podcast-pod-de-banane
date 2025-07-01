@@ -1,6 +1,6 @@
 const staticCacheName = "pod-banane-v1";
 
-  const assets = [
+const assets = [
     "./",
     "./index.html",
     "./open.html",
@@ -12,7 +12,7 @@ const staticCacheName = "pod-banane-v1";
     "./manifest.json",
     "./assets/manifest-icon-192.maskable.png",
     "./assets/manifest-icon-512.maskable.png"
-  ];
+];
 
 // <!-- INSTALL -->
 self.addEventListener('install', event => { // indice: quand le SW est installé
@@ -91,4 +91,11 @@ self.addEventListener('fetch', event => {
 });
 
   
-
+// <!-- SYNCHRONISATION -->
+self.addEventListener('sync', (event) => {
+    console.log('📡 Sync déclenchée pour:', event.tag);
+    if (event.tag === 'sync-podcasts') { // indice: le même tag que plus haut
+      event.waitUntil(syncSnacks()); // indice: dire "attends la fin de cette promesse"
+    }
+});
+  
