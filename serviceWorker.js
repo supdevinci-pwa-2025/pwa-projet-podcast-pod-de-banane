@@ -50,7 +50,7 @@ self.addEventListener('fetch', event => {
 
     console.log('allo Interception fetch:', request.method, url.pathname);
 
-    if (request.method === "POST" && url.pathname.includes('/pod-banane')) {
+    if (request.method === "POST" && url.pathname.includes('/api/pod-banane')) {
         event.respondWith(handlePodcastSubmission(request));
         return;
     }
@@ -115,7 +115,7 @@ async function syncPodcasts() {
         try {
             console.log(`🚀 Envoi de ${participant.name}`); // indice: propriété du participant à afficher
 
-            const response = await fetch(__________, { // indice: URL de votre API
+            const response = await fetch("/api/pod-banane", { // indice: URL de votre API
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
