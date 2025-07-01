@@ -4,6 +4,7 @@ const staticCacheName = "pod-banane-v1";
     "./",
     "./index.html",
     "./open.html",
+    "./offline.html",
     "./share.html",
     "./Dashboard.html",
     "./app.js",
@@ -42,16 +43,31 @@ self.addEventListener('install', event => { // indice: quand le SW est installé
 
 
 
-  //  FETCH : servir depuis le cache
- 
-// Intercepter les requêtes pour servir depuis le cache
+  //  FETCH
 self.addEventListener('fetch', event => {
-  console.log('🛰 Fetch:', event.request.url);
+    const request = event.request;
+    const url = new URL(request.url);
+
+    console.log('🛰 Interception fetch:', request.method, url.pathname);
+
+    if(request.method === "POST" && url.pathname.includes('/api/pod-banane')) {
+        event.respondWith(handlePodcastSubmission(request));
+        return;
+    }
+
+    if(request.method === "GET" || url.origin !== location.origin) return;
+
+    if(url.pathname === "/" || url.pathname === "/index.html") {
+        event.respondWith(
+        caches.match("./index.html").then(res => res || fetch(request).catch(() => caches.match("./offline.html")))
+        );
+        return;
+    }
  
-  event.respondWith( // indice: permet de renvoyer une réponse custom
-    caches.match(event.request) // cherche dans le cache
-      .then(res => res || fetch(event.request)) // si pas trouvé, va le chercher en ligne
-  );
+    event.respondWith( // indice: permet de renvoyer une réponse custom
+        caches.match(event.request) // cherche dans le cache
+        .then(res => res || fetch(event.request)) // si pas trouvé, va le chercher en ligne
+    );
 });
 
   
