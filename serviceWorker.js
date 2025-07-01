@@ -4,11 +4,8 @@ const staticCacheName = "pod-banane-v1";
     "./",
     "./index.html",
     "./open.html",
-    "./index.html",
     "./share.html",
     "./Dashboard.html",
-    "./public/404.html",
-    "./public/index.html",
     "./app.js",
     "./style.css",
     "./manifest.json",
@@ -16,7 +13,6 @@ const staticCacheName = "pod-banane-v1";
     "./assets/manifest-icon-512.maskable.png"
   ];
 
-  // <!-- INSTALLATION -->
 self.addEventListener('install', event => { // indice: quand le SW est installé
     console.log(' Service Worker installé');
     
