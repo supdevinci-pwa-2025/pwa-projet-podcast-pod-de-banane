@@ -57,16 +57,32 @@ self.addEventListener('fetch', event => {
 
     if(request.method === "GET" || url.origin !== location.origin) return;
 
-    if(url.pathname === "/" || url.pathname === "/index.html") {
+    if(url.pathname === "/" || url.pathname === "./index.html") {
         event.respondWith(
         caches.match("./index.html").then(res => res || fetch(request).catch(() => caches.match("./offline.html")))
         );
         return;
     }
+
+    if(url.pathname === "/" || url.pathname === "./Dashboard.html") {
+        event.respondWith(
+        caches.match("./Dashboard.html").then(res => res || fetch(request).catch(() => caches.match("./offline.html")))
+        );
+        return;
+    }
  
-    event.respondWith( // indice: permet de renvoyer une réponse custom
-        caches.match(event.request) // cherche dans le cache
-        .then(res => res || fetch(event.request)) // si pas trouvé, va le chercher en ligne
+    event.respondWith(
+        caches.match(request)
+        .then(res => res || fetch(request)
+            .then(fetchRes => {
+            if (fetchRes.ok) {
+                const resClone = fetchRes.clone();
+                caches.open(staticCacheName).then(cache => cache.put(request, resClone));
+            }
+            return fetchRes;
+            })
+            .catch(() => caches.match('./offline.html'))
+        )
     );
 });
 
