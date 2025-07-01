@@ -55,7 +55,11 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    if(request.method === "GET" || url.origin !== location.origin) return;
+    console.log("URL Origin:", url.origin);
+    console.log("Location Origin:", location.origin);
+    console.log("Request Method:", request.method);
+
+    if(request.method !== "GET" || url.origin !== location.origin) return;
 
     if(url.pathname === "/" || url.pathname === "/index.html") {
         event.respondWith(
