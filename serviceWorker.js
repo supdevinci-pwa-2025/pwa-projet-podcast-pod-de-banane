@@ -9,7 +9,8 @@ self.addEventListener('install', event => { // indice: quand le SW est installé
     self.clients.claim( ); // indice: prendre le contrôle des pages ouvertes
   });
 
-  const staticCacheName = "pod-banane-cache";
+  const staticCacheName = "pod-banane-v1";
+
   const assets = [
     "./",
     "./index.html",
@@ -20,7 +21,8 @@ self.addEventListener('install', event => { // indice: quand le SW est installé
     "./public/404.html",
     "./public/index.html",
     "./app.js",
-    "./serviceWorker.js",
-    "./functions/share.js",
     "./style.css",
+    "./manifest.json",
+    "./assets/manifest-icon-192.maskable.png",
+    "./assets/manifest-icon-512.maskable.png"
   ];
