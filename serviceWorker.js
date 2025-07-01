@@ -40,5 +40,19 @@ self.addEventListener('install', event => { // indice: quand le SW est installé
     self.clients.claim( ); // indice: prendre le contrôle des pages ouvertes
   });
 
+
+
+  //  FETCH : servir depuis le cache
+ 
+// Intercepter les requêtes pour servir depuis le cache
+self.addEventListener('fetch', event => {
+  console.log('🛰 Fetch:', event.request.url);
+ 
+  event.respondWith( // indice: permet de renvoyer une réponse custom
+    caches.match(event.request) // cherche dans le cache
+      .then(res => res || fetch(event.request)) // si pas trouvé, va le chercher en ligne
+  );
+});
+
   
 
