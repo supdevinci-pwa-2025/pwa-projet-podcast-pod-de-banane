@@ -198,13 +198,13 @@ function getApiUrl() {
   // Si on est en local (dev sur machine locale)
   if (currentUrl.hostname === 'localhost' || currentUrl.hostname === '127.0.0.1') {
     // Retourne l'URL locale pour l'API, sur le même port que le front-end
-    return `${currentUrl.origin}/api/participant`;
+    return `${currentUrl.origin}/api/members`;
   }
-  // Si on est déployé sur Netlify (URL contenant "netlify.app")
-  if (currentUrl.hostname.includes('netlify.app')) {
+  // Si on est déployé sur Firebase
+  if (currentUrl.hostname.includes('app')) {
     // Retourne l'URL de la fonction serverless hébergée sur Netlify
-    return `${currentUrl.origin}/.netlify/functions/participant`;
+    return `${currentUrl.origin}/functions/members`;
   }
   // Sinon on retourne une URL de production fixe (exemple : site Netlify principal)
-  return 'https://participantntrack.netlify.app/.netlify/functions/participant';
+  return 'https://pod-de-banane.web.app/functions/members';
 }
