@@ -1,7 +1,7 @@
 let members = JSON.parse(localStorage.getItem("podcastMembers")) || [];
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
+  navigator.serviceWorker.register('/serviceWorker.js')
   .then((reg) => {
     // registration worked
     console.log('Enregistrement réussi');
