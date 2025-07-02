@@ -256,7 +256,7 @@ async function syncParticipants() {
   
   for (const participant of pending) {
     try {
-      const response = await fetch('https://snackntrack.netlify.app/.netlify/functions/snack', {
+      const response = await fetch('https://pod-de-banane.web.app/functions/members', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json', 
