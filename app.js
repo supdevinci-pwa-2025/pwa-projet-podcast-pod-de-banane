@@ -22,6 +22,16 @@ function addMember() {
     localStorage.setItem("podcastMembers", JSON.stringify(members));
     nameInput.value = "";
     displayMembers();
+
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.push({
+        type: 'show-notification',
+        data: {
+          title: 'Nouveau membre ajouté !',
+          body: `${name} (${role}) a été ajouté au podcast.`
+        }
+      });
+    }
 }
 
 // Charger les snacks au démarrage
