@@ -1,5 +1,4 @@
-// app.js - Version finale avec import idb.js
-import {addParticipant, getAllParticipants } from './idb.js';
+let members = JSON.parse(localStorage.getItem("podcastMembers")) || [];
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/serviceWorker.js')
@@ -7,38 +6,8 @@ if ('serviceWorker' in navigator) {
     .catch(err => console.error('❌ SW non enregistré:', err));
 }
 
-// Variables globales
 const participantList = document.querySelector('#participant-list');
 let participants = [];
-
-// Charger les participants au démarrage
-    if (name === "") {
-        alert("Veuillez entrer un nom.");
-        return;
-    }
-
-    const newMember = { name, role };
-    members.push(newMember);
-    localStorage.setItem("podcastMembers", JSON.stringify(members));
-    nameInput.value = "";
-    displayMembers();
-
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.push({
-        type: 'show-notification',
-        data: {
-          title: 'Nouveau membre ajouté !',
-          body: `${name} (${role}) a été ajouté au podcast.`
-        }
-      });
-    }
-
-// Charger les snacks au démarrage
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadParticipant();
-  setupForm();
-  setupServiceWorkerListener();
-});
 
 function addMember() {
     const nameInput = document.getElementById("memberName");
@@ -56,17 +25,46 @@ function addMember() {
     localStorage.setItem("podcastMembers", JSON.stringify(members));
     nameInput.value = "";
     displayMembers();
-
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.push({
-        type: 'show-notification',
-        data: {
-          title: 'Nouveau membre ajouté !',
-          body: `${name} (${role}) a été ajouté au podcast.`
-        }
-      });
-    }
 }
+
+// Charger les participants au démarrage
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadParticipants();
+  setupForm();
+  setupServiceWorkerListener();
+});
+
+function displayMembers() {
+    const list = document.getElementById("teamList");
+    list.innerHTML = "";
+
+    let count = { total: 0, Voix: 0, Script: 0, Montage: 0 };
+
+    members.forEach(({ name, role }, index) => {
+        const div = document.createElement("div");
+        div.className = "member";
+        div.innerHTML = `
+      <span>${name} – ${role}</span>
+      <button onclick="removeMember(${index})">❌</button>
+    `;
+        list.appendChild(div);
+        count.total++;
+        count[role]++;
+    });
+
+    document.getElementById("total").textContent = count.total;
+    document.getElementById("voice").textContent = count["Voix"];
+    document.getElementById("script").textContent = count["Script"];
+    document.getElementById("montage").textContent = count["Montage"];
+}
+
+function removeMember(index) {
+    members.splice(index, 1);
+    localStorage.setItem("podcastMembers", JSON.stringify(members));
+    displayMembers();
+}
+
+displayMembers();
 
 // ============ GESTION DU FORMULAIRE ============
 function setupForm() {
@@ -83,12 +81,12 @@ function setupForm() {
       return;
     }
 
-    console.log('📝 Envoi du participant:', { name, role });
+    console.log('📝 Envoi du participants:', { name, role });
     
     try {
       const formData = new FormData();
       formData.append('name', name);
-      formData.append('role', role);
+      formData.append('mood', role);
       
       const response = await fetch('/functions/members', {
         method: 'POST',
@@ -134,7 +132,7 @@ function setupServiceWorkerListener() {
           console.log('🔄 Participant synchronisé:', data);
           showMessage(`🔄 ${data.name} synchronisé !`, 'success');
           // Recharger la liste après sync
-          loadParticipant();
+          loadParticipants();
           break;
       }
     });
@@ -142,7 +140,7 @@ function setupServiceWorkerListener() {
 }
 
 // ============ CHARGEMENT DES PARTICIPANTS (FONCTION CORRIGÉE) ============
-async function loadParticipant() {
+async function loadParticipants() {
   try {
     console.log('📱 Chargement des participants...');
     
@@ -157,12 +155,12 @@ async function loadParticipant() {
     
     // 2. Charger depuis localStorage (backup)
     const backupParticipants = JSON.parse(localStorage.getItem('participants')) || [];
-    console.log('💾 Participatns depuis localStorage:', backupParticipants.length);
+    console.log('💾 Participants depuis localStorage:', backupParticipants.length);
     
     // 3. Essayer l'API (si en ligne)
     let apiParticipants = [];
     try {
-      const response = await fetch('https://pod-de-banane.web.app/functions/get-members');
+      const response = await fetch('https://pod-de-banane.web.app/functions/get-participants');
       if (response.ok) {
         const data = await response.json();
         apiParticipants = data.participants || [];
@@ -179,7 +177,7 @@ async function loadParticipant() {
     const uniqueParticipants = allParticipants.filter((participant, index, self) => 
       index === self.findIndex(p => 
         p.name === participant.name && 
-        p.role === participant.role
+        p.mood === participant.role
       )
     );
     
@@ -198,7 +196,7 @@ async function loadParticipant() {
     // Fallback localStorage uniquement
     participants = JSON.parse(localStorage.getItem('participants')) || [];
     participantList.innerHTML = '';
-    participants.forEach(participant => addParticipantToUI(participant.name, participant.mood));
+    participant.forEach(participant => addParticipantToUI(participant.name, participant.role));
   }
 }
 
