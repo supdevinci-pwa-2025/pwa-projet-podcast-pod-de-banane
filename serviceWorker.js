@@ -8,8 +8,6 @@ const assets = [
   "./share.html",
   "./Dashboard.html",
   "./app.js",
-  "./functions/members.js",
-  "./functions/share.js",
   "./style.css",
   "./manifest.json",
   "./assets/manifest-icon-192.maskable.png",
@@ -19,7 +17,7 @@ const assets = [
 // ============ IndexedDB ==============
 function openDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('participantsDB', 3);
+    const request = indexedDB.open('participantDB', 3);
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
@@ -40,7 +38,7 @@ async function getAllPending() {
     const db = await openDB();
     const transaction = db.transaction(['participants'], 'readonly');
     const store = transaction.objectStore('participants');
-    
+
     return new Promise((resolve, reject) => {
       const request = store.getAll();
       request.onsuccess = () => {
@@ -61,7 +59,7 @@ async function savePendingParticipant(participantData) {
     const db = await openDB();
     const transaction = db.transaction(['participants'], 'readwrite');
     const store = transaction.objectStore('participants');
-    
+
     return new Promise((resolve, reject) => {
       const request = store.add(participantData);
       request.onsuccess = () => {
@@ -84,7 +82,7 @@ async function deletePendingParticipant(id) {
     const db = await openDB();
     const transaction = db.transaction(['participants'], 'readwrite');
     const store = transaction.objectStore('participants');
-    
+
     return new Promise((resolve, reject) => {
       const request = store.delete(id);
       request.onsuccess = () => {
@@ -110,62 +108,79 @@ async function notifyClients(type, data) {
   }
 }
 
-// ============ INSTALL ==============
-self.addEventListener('install', (e) => {
-  console.log('Service Worker: Installation');
-  e.waitUntil(
-    caches.open(staticCacheName).then(cache => cache.addAll(assets))
+// <!-- INSTALL -->
+self.addEventListener('install', event => { // indice: quand le SW est installé
+  console.log(' Service Worker installé');
+
+  event.waitUntil(
+    caches.open(staticCacheName)
+      .then(cache => cache.addAll(assets))
+      .catch((err) => console.error("Erreur cache install", err))
   );
-  self.skipWaiting();
+
+  self.skipWaiting(); // indice: forcer à prendre le contrôle immédiatement
 });
 
-// ============ ACTIVATE ==============
-self.addEventListener('activate', (e) => {
-  console.log('Service Worker: Activation');
-  e.waitUntil(
+// <!-- ACTIVATE -->
+self.addEventListener('activate', event => { // indice: quand le SW devient actif
+  console.log(' Service Worker activé');
+
+  event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== staticCacheName).map(k => caches.delete(k)))
+      Promise.all(
+        keys.filter(k => k !== staticCacheName).map(k => caches.delete(k))
+      )
     )
   );
-  self.clients.claim();
+
+  self.clients.claim() // indice: prendre le contrôle des pages ouvertes
 });
 
-// ============ FETCH ==============
-self.addEventListener('fetch', (event) => {
+
+// <!-- FETCH -->
+self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
 
-  if (request.method === 'POST' && (url.pathname.includes('/api/participant') || url.pathname.includes('/functions/members'))) {
+  console.log('Interception fetch:', request.method, url.pathname);
+
+  if (request.method === "POST" && url.pathname.includes('/api/pod-banane') || url.pathname.includes('/functions/members')) {
     event.respondWith(handleParticipantSubmission(request));
     return;
   }
 
-  if (request.method !== 'GET' || url.origin !== location.origin) return;
+  console.log("URL Origin:", url.origin);
+  console.log("Location Origin:", location.origin);
+  console.log("Request Method:", request.method);
+
+  if (request.method !== "GET" || url.origin !== location.origin) return;
 
   if (url.pathname === "/" || url.pathname === "/index.html") {
     event.respondWith(
-      caches.match('./index.html').then(res => res || fetch(request).catch(() => caches.match('./offline.html')))
+      caches.match("./index.html").then(res => res || fetch(request).catch(() => caches.match("./offline.html")))
     );
     return;
   }
 
-  if (url.pathname === "/Dashboard" || url.pathname === "/Dashboard.html") {
+  if (url.pathname === "/" || url.pathname === "./Dashboard.html") {
     event.respondWith(
-      caches.match('./Dashboard.html').then(res => res || fetch(request).catch(() => caches.match('./offline.html')))
+      caches.match("./Dashboard.html").then(res => res || fetch(request).catch(() => caches.match("./offline.html")))
     );
     return;
   }
 
   event.respondWith(
-    caches.match(request).then(res => 
-      res || fetch(request).then(fetchRes => {
-        if (fetchRes.ok) {
-          const resClone = fetchRes.clone();
-          caches.open(staticCacheName).then(cache => cache.put(request, resClone));
-        }
-        return fetchRes;
-      }).catch(() => caches.match('./offline.html'))
-    )
+    caches.match(request)
+      .then(res => res || fetch(request)
+        .then(fetchRes => {
+          if (fetchRes.ok) {
+            const resClone = fetchRes.clone();
+            caches.open(staticCacheName).then(cache => cache.put(request, resClone));
+          }
+          return fetchRes;
+        })
+        .catch(() => caches.match('./offline.html'))
+      )
   );
 });
 
@@ -182,35 +197,35 @@ async function handleParticipantSubmission(request) {
     throw new Error(`Erreur ${response.status}`);
   } catch (error) {
     console.log('📱 Mode hors ligne détecté, sauvegarde locale...');
-    
+
     try {
       const formData = await request.formData();
       console.log('📝 FormData récupérée:', {
         name: formData.get('name'),
         role: formData.get('role')
       });
-      
+
       const participantData = {
         id: Date.now().toString(),
-        name: formData.get('name') || formData.get('nom'),
+        name: formData.get('name') || formData.get('participant'),
         role: formData.get('role') || formData.get('role'),
         timestamp: new Date().toISOString(),
         synced: false
       };
-      
+
       console.log('💾 Données à sauvegarder:', participantData);
-      
+
       await savePendingParticipant(participantData);
       console.log('✅ savePendingParticipant terminé');
-      
+
       if ('sync' in self.registration) {
-        await self.registration.sync.register('sync-participants');
+        await self.registration.sync.register('sync-participant');
         console.log('🔄 Background sync enregistré');
       }
-      
+
       await notifyClients('participant-saved-offline', participantData);
       console.log('📱 Clients notifiés');
-      
+
       return new Response(JSON.stringify({
         success: true,
         offline: true,
@@ -219,7 +234,7 @@ async function handleParticipantSubmission(request) {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
-      
+
     } catch (saveError) {
       console.error('❌ Erreur lors de la sauvegarde:', saveError);
       throw saveError;
@@ -227,55 +242,136 @@ async function handleParticipantSubmission(request) {
   }
 }
 
-// ============ BACKGROUND SYNC ==============
+// <!-- SYNCHRONISATION -->
 self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-participants') {
-    event.waitUntil(syncParticipants());
+  console.log('📡 Sync déclenchée pour:', event.tag);
+  if (event.tag === 'sync-participant') { // indice: le même tag que plus haut
+    event.waitUntil(syncParticipants()); // indice: dire "attends la fin de cette promesse"
   }
 });
 
 async function syncParticipants() {
-  const pending = await getAllPending();
-  console.log(`🔄 Tentative de sync de ${pending.length} participants`);
-  
-  for (const participant of pending) {
-    try {
-      const response = await fetch('https://pod-de-banane.web.app/functions/members', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Accept': 'application/json' 
-        },
-        body: JSON.stringify({
-          name: participant.name,
-          role: participant.role,
-          timestamp: participant.timestamp
-        })
-      });
-      
-      if (response.ok) {
-        await deletePendingParticipant(participant.id);
-        await notifyClients('participant-synced', participant);
-        console.log('✅ Participant synchronisé:', participant.name);
-      } else {
-        console.error(`❌ Erreur sync ${participant.name}: ${response.status}`);
-      }
-    } catch (err) {
-      console.error(`❌ Sync failed for ${participant.name}:`, err);
+  // Log dans la console pour indiquer le début de la synchronisation
+  console.log('🔄 Début de la synchronisation...');
+ 
+  try {
+    // 1️⃣ Récupération des participants en attente dans IndexedDB (base locale du navigateur)
+    // getAllPending() est une fonction asynchrone qui retourne un tableau de participants non synchronisés
+    const pending = await getAllPending();
+    console.log(`📊 ${pending.length} participants(s) à synchroniser`);
+ 
+    // Si aucun participant à synchroniser, on sort directement de la fonction (pas besoin de faire plus)
+    if (pending.length === 0) {
+      console.log('✅ Aucun participant en attente');
+      return;  // Fin de la fonction ici
     }
+ 
+    // 2️⃣ Initialisation de compteurs pour suivre succès/échecs
+    let success = 0, fail = 0;
+    // Tableau pour garder les participants qui n'ont pas pu être synchronisés, avec détail de l'erreur
+    const failedParticipants = [];
+ 
+    // 3️⃣ Boucle asynchrone pour traiter chaque participant un par un
+    for (const participant of pending) {
+      try {
+        console.log('🚀 Tentative de synchro pour :', participant.name);
+
+        // Récupération de l'URL de l'API via une fonction dédiée pour gérer différents environnements (local, prod...)
+        const apiUrl = getApiUrl();
+        console.log('🌐 URL API utilisée:', apiUrl);
+ 
+        // Envoi de la requête HTTP POST vers l'API
+        // fetch() est une API JavaScript moderne pour faire des requêtes HTTP asynchrones
+        // Ici on envoie les données au format JSON (headers et body)
+        const response = await fetch(apiUrl, {
+          method: 'POST',               // Méthode HTTP POST pour envoyer des données
+          headers: {                   // En-têtes HTTP pour indiquer le type de contenu
+            'Content-Type': 'application/json', // Le corps de la requête est en JSON
+            'Accept': 'application/json'        // On attend une réponse en JSON
+          },
+          body: JSON.stringify({       // Conversion des données JavaScript en chaîne JSON
+            name: participant.name,          // Propriété 'name' du participant
+            role: participant.role,          // Propriété 'role' du participant
+          })
+        });
+ 
+        // Log du statut HTTP reçu : status est un entier (ex: 200), statusText est une description (ex: OK)
+        console.log('📊 Réponse serveur:', response.status, response.statusText);
+ 
+        if (response.ok) {
+          // Si le serveur répond avec un code HTTP 2xx (succès), on considère la synchro réussie
+          console.log('✅ Participant synchronisé :', participant.name);
+ 
+          // Suppression du participant de IndexedDB pour éviter les doublons à l'avenir
+          // deletePendingParticipant() est une fonction asynchrone qui supprime par identifiant
+          await deletePendingParticipant(participant.id);
+ 
+          // Notification aux autres onglets/pages que ce participant a été synchronisé
+          // Utile pour mettre à jour l'affichage en temps réel dans plusieurs fenêtres
+          await notifyClients('participant-synced', { participant });
+ 
+          success++; // Incrémentation du compteur de succès
+        } else {
+          // Si la réponse HTTP est autre que 2xx (ex: erreur 404, 500)
+          // On tente de lire le corps de la réponse pour récupérer un message d'erreur
+          const errorText = await response.text().catch(() => 'Erreur inconnue');
+ 
+          // Log détaillé de l'erreur serveur
+          console.error(`❌ Erreur serveur ${response.status} pour : ${participant.name}`, errorText);
+ 
+          // On ajoute ce participant à la liste des participants ayant échoué la synchro, avec le message d'erreur
+          failedParticipants.push({ participant: participant.name, error: `${response.status}: ${errorText}` });
+ 
+          fail++; // Incrémentation du compteur d'échecs
+        }
+ 
+      } catch (err) {
+        // Gestion des erreurs liées au réseau (ex: pas d'accès Internet, timeout)
+        console.error(`❌ Erreur réseau pour : ${participant.name}`, err.message);
+ 
+        // On garde aussi trace de ces erreurs dans le tableau des échecs
+        failedParticipants.push({ participant: participant.name, error: err.message });
+ 
+        fail++; // Incrémentation du compteur d'échecs
+      }
+    }
+ 
+    // 4️⃣ Après traitement de tous les participants, on affiche un bilan clair
+    console.log(`📈 Sync terminée : ${success} succès / ${fail} échecs`);
+ 
+    // Si certains participants n'ont pas pu être synchronisés, on affiche la liste avec erreurs
+    if (failedParticipants.length > 0) {
+      console.log('❌ Participant échoués:', failedParticipants);
+    }
+ 
+    // Notification générale aux autres onglets/pages que la synchronisation est terminée
+    // On transmet le nombre de succès, d'erreurs, et les détails des échecs
+    await notifyClients('sync-completed', { 
+      success, 
+      errors: fail, 
+      failedParticipants: failedParticipants 
+    });
+ 
+  } catch (e) {
+    // Gestion d'erreurs globales pouvant survenir dans tout le bloc try (ex: erreur IndexedDB)
+    console.error('💥 Erreur globale dans syncParticipants :', e);
+ 
+    // Notification des autres onglets/pages qu'il y a eu une erreur globale
+    await notifyClients('sync-error', { error: e.message });
+ 
+    // Relance de l'erreur pour que le code qui a appelé syncParticipants puisse aussi la gérer
+    throw e;
   }
 }
 
 // ============ PUSH ==============
 self.addEventListener('push', (event) => {
   const data = event.data?.json() || {};
-  const title = data.title || "POD DE BANANE 🍌";
+  const title = data.title || "Pod de Banane";
   const options = {
     body: data.body || "Nouvelle notification",
     icon: "./assets/manifest-icon-192.maskable.png",
     badge: "./assets/manifest-icon-192.maskable.png"
   };
-
   event.waitUntil(self.registration.showNotification(title, options));
 });
-

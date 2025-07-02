@@ -1,24 +1,10 @@
-// import {addParticipant, getAllParticipants } from './idb.js';
-
 let members = JSON.parse(localStorage.getItem("podcastMembers")) || [];
-
-
-// Charger les snacks au démarrage
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadPodcasts();
-  setupForm();
-  setupServiceWorkerListener();
-  askNotificationPermission();
-});
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/serviceWorker.js')
     .then(reg => console.log('✅ SW enregistré', reg))
     .catch(err => console.error('❌ SW non enregistré:', err));
 }
-
-const participantList = document.querySelector('#participant-list');
-let participants = [];
 
 function addMember() {
     const nameInput = document.getElementById("memberName");
@@ -76,6 +62,7 @@ function removeMember(index) {
 }
 
 displayMembers();
+
 
 // SYNCHRONISATION
 navigator.serviceWorker.ready.then(reg => {
@@ -223,29 +210,34 @@ function getApiUrl() {
   // Sinon on retourne une URL de production fixe (exemple : site Netlify principal)
   return 'https://pod-de-banane.web.app/functions/members';
 }
+
+
+
 // ============ GESTION DU FORMULAIRE ============
 function setupForm() {
-  const form = document.querySelector('#participant-form');
+  const form = document.querySelector('#participants-form');
   
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const name = document.querySelector('#participant-name').value.trim();
-    const role = document.querySelector('#participant-role').value.trim();
+    const mood = document.querySelector('#participant-role').value.trim();
     
     if (!name || !role) {
       alert('Veuillez remplir tous les champs');
       return;
     }
 
-    console.log('📝 Envoi du participants:', { name, role });
+    console.log('📝 Envoi du snack:', { name, role });
     
     try {
+      // Créer FormData pour l'envoi
       const formData = new FormData();
       formData.append('name', name);
-      formData.append('mood', role);
+      formData.append('role', role);
       
-      const response = await fetch('/functions/members', {
+      // Envoyer vers l'API (intercepté par le SW si hors ligne)
+      const response = await fetch('/api/pod-banane', {
         method: 'POST',
         body: formData
       });
@@ -254,21 +246,22 @@ function setupForm() {
       console.log('✅ Réponse:', result);
       
       if (result.offline) {
-        showMessage('📱 Participant sauvegardé hors ligne !', 'warning');
+        showMessage('📱 Podcast sauvegardé hors ligne !', 'warning');
       } else {
-        showMessage('✅ Participant ajouté avec succès !', 'success');
-        addParticipantToUI(name, role);
+        showMessage('✅ Podcast ajouté avec succès !', 'success');
+        // Ajouter à la liste locale immédiatement
+        addSnackToUI(name, role);
       }
       
       form.reset();
       
     } catch (error) {
       console.error('❌ Erreur soumission:', error);
-      console.error('❌ Détails:', error.message);
-      showMessage(`❌ Erreur: ${error.message}`, 'error');
+      showMessage('❌ Erreur lors de l\'ajout', 'error');
     }
   });
 }
+
 
 // ============ ÉCOUTER LES MESSAGES DU SERVICE WORKER ============
 function setupServiceWorkerListener() {
@@ -281,95 +274,57 @@ function setupServiceWorkerListener() {
       switch (type) {
         case 'participant-saved-offline':
           console.log('📱 Participant sauvegardé hors ligne:', data);
-          addParticipantToUI(data.name, data.role);
+          addSnackToUI(data.name, data.role);
           showMessage(`📱 ${data.name} sauvegardé hors ligne`, 'warning');
           break;
           
         case 'participant-synced':
           console.log('🔄 Participant synchronisé:', data);
           showMessage(`🔄 ${data.name} synchronisé !`, 'success');
-          // Recharger la liste après sync
-          loadParticipants();
           break;
       }
     });
   }
 }
 
-// ============ CHARGEMENT DES PARTICIPANTS (FONCTION CORRIGÉE) ============
-async function loadParticipants() {
+// ============ CHARGEMENT DES PODCASTS ============
+async function loadPodcasts() {
   try {
-    console.log('📱 Chargement des participants...');
+    // Essayer de charger depuis l'API
+    const response = await fetch('https://pod-de-banane.web.app/function/members');
     
-    // 1. Charger depuis IndexedDB (via idb.js)
-    let localParticipants = [];
-    try {
-      localParticipants = await getAllParticipants();
-      console.log('📦 Participants depuis IndexedDB:', localParticipants.length, localParticipants);
-    } catch (error) {
-      console.error('❌ Erreur IndexedDB:', error);
+    if (response.ok) {
+      const data = await response.json();
+      members = data.members || [];
+      console.log('✅ Participants chargés depuis l\'API:', members.length);
+    } else {
+      throw new Error('API non disponible');
     }
-    
-    // 2. Charger depuis localStorage (backup)
-    const backupParticipants = JSON.parse(localStorage.getItem('participants')) || [];
-    console.log('💾 Participants depuis localStorage:', backupParticipants.length);
-    
-    // 3. Essayer l'API (si en ligne)
-    let apiParticipants = [];
-    try {
-      const response = await fetch('https://pod-de-banane.web.app/functions/get-participants');
-      if (response.ok) {
-        const data = await response.json();
-        apiParticipants = data.participants || [];
-        console.log('✅ Participants depuis API:', apiParticipants.length);
-      }
-    } catch (error) {
-      console.log('📱 API non disponible');
-    }
-    
-    // 4. Fusionner les sources (éviter doublons)
-    const getAllParticipants = [...apiParticipants, ...localParticipants, ...backupParticipants];
-    
-    // Déduplication simple par nom + mood
-    const uniqueParticipants = allParticipants.filter((participant, index, self) => 
-      index === self.findIndex(p => 
-        p.name === participant.name && 
-        p.mood === participant.role
-      )
-    );
-    
-    participants = uniqueParticipants;
-    console.log('🍪 Total participants uniques:', participants.length);
-    
-    // 5. Afficher dans l'UI
-    participantList.innerHTML = '';
-    participants.forEach(participant => addParticipantToUI(participant.name, participant.role));
-    
-    // 6. Sauvegarder dans localStorage comme backup
-    localStorage.setItem('participants', JSON.stringify(participants));
-    
   } catch (error) {
-    console.error('❌ Erreur loadParticipants:', error);
-    // Fallback localStorage uniquement
-    participants = JSON.parse(localStorage.getItem('participants')) || [];
-    participantList.innerHTML = '';
-    participant.forEach(participant => addParticipantToUI(participant.name, participant.role));
+    console.log('📱 API non disponible, chargement depuis localStorage');
+    // Fallback sur localStorage
+    members = JSON.parse(localStorage.getItem('members')) || [];
   }
+  
+  // Afficher les snacks
+  members.forEach(member => addSnackToUI(member.name, member.role));
 }
 
 // ============ AFFICHAGE UI ============
-function addParticipantToUI(name, role) {
+function addSnackToUI(name, role) {
   const li = document.createElement('li');
   li.textContent = `🍪 ${name} (${role})`;
-  li.className = 'participant-item';
-  participantList.appendChild(li);
+  li.className = 'member-item';
+  memberList.appendChild(li);
 }
 
 function showMessage(message, type = 'info') {
+  // Créer un élément de notification
   const notification = document.createElement('div');
   notification.className = `notification ${type}`;
   notification.textContent = message;
   
+  // Styles basiques
   notification.style.cssText = `
     position: fixed;
     top: 20px;
@@ -386,58 +341,8 @@ function showMessage(message, type = 'info') {
   
   document.body.appendChild(notification);
   
+  // Supprimer après 3 secondes
   setTimeout(() => {
     notification.remove();
   }, 3000);
-}
-
-// ============ BOUTON TEST SYNC ============
-document.addEventListener('DOMContentLoaded', () => {
-  const syncButton = document.querySelector('[data-action="sync"]');
-  
-  syncButton?.addEventListener('click', async () => {
-    if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        await registration.sync.register('sync-participants');
-        console.log('🔄 Background sync déclenché manuellement');
-        showMessage('🔄 Synchronisation déclenchée', 'info');
-      } catch (error) {
-        console.error('❌ Erreur sync:', error);
-        showMessage('❌ Erreur de synchronisation', 'error');
-      }
-    } else {
-      showMessage('❌ Background Sync non supporté', 'error');
-    }
-  });
-});
-
-// ============ SAUVEGARDE PÉRIODIQUE ============
-setInterval(() => {
-  if (participants.length > 0) {
-    localStorage.setItem('participants', JSON.stringify(participants));
-    console.log('💾 Backup localStorage effectué');
-  }
-}, 30000);
-
-function askNotificationPermission() {
-  if (!('Notification' in window)) return;
-
-  Notification.requestPermission().then(permission => {
-    if (permission === 'granted') {
-      console.log("🔔 Notifications autorisées !");
-    } else {
-      console.warn("❌ Notifications refusées.");
-    }
-  });
-}
-
-function showNotification(title, body) {
-  if (Notification.permission === 'granted') {
-    new Notification(title, {
-      body: body,
-      icon: "./assets/manifest-icon-192.maskable.png",
-      badge: "./assets/manifest-icon-192.maskable.png"
-    });
-  }
 }
