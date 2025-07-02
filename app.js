@@ -1,14 +1,9 @@
 let members = JSON.parse(localStorage.getItem("podcastMembers")) || [];
 
 if ('serviceWorker' in navigator) {
-  register('/serviceWorker.js')
-  .then((reg) => {
-    // registration worked
-    console.log('Enregistrement réussi');
-  }).catch((error) => {
-    // registration failed
-    console.log('Erreur : ' + error);
-  });
+  navigator.serviceWorker.register('/serviceWorker.js')
+    .then(reg => console.log('✅ SW enregistré', reg))
+    .catch(err => console.error('❌ SW non enregistré:', err));
 }
 
 function addMember() {
