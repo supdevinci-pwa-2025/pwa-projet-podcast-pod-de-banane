@@ -143,8 +143,8 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
 
   console.log('allo Interception fetch:', request.method, url.pathname);
-  console.log(request.method === "POST");
-  console.log(url.pathname.includes('/api/pod-banane'));
+  console.log(request.method);
+  console.log(url.pathname);
   if (request.method === "POST" && url.pathname.includes('/api/pod-banane')) {
     event.respondWith(handleParticipantSubmission(request));
     return;
