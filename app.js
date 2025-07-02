@@ -12,6 +12,28 @@ const participantList = document.querySelector('#participant-list');
 let participants = [];
 
 // Charger les participants au démarrage
+    if (name === "") {
+        alert("Veuillez entrer un nom.");
+        return;
+    }
+
+    const newMember = { name, role };
+    members.push(newMember);
+    localStorage.setItem("podcastMembers", JSON.stringify(members));
+    nameInput.value = "";
+    displayMembers();
+
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.push({
+        type: 'show-notification',
+        data: {
+          title: 'Nouveau membre ajouté !',
+          body: `${name} (${role}) a été ajouté au podcast.`
+        }
+      });
+    }
+
+// Charger les snacks au démarrage
 document.addEventListener('DOMContentLoaded', async () => {
   await loadParticipant();
   setupForm();

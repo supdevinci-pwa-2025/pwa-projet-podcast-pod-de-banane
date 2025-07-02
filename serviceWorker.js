@@ -267,11 +267,12 @@ async function syncParticipants() {
 // ============ PUSH ==============
 self.addEventListener('push', (event) => {
   const data = event.data?.json() || {};
-  const title = data.title || "Snack'n'Track 🍉";
+  const title = data.title || "POD DE BANANE 🍌";
   const options = {
     body: data.body || "Nouvelle notification",
     icon: "./assets/manifest-icon-192.maskable.png",
     badge: "./assets/manifest-icon-192.maskable.png"
   };
+
   event.waitUntil(self.registration.showNotification(title, options));
 });
