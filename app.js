@@ -22,6 +22,9 @@ function addMember() {
     localStorage.setItem("podcastMembers", JSON.stringify(members));
     nameInput.value = "";
     displayMembers();
+
+
+    showNotification('Nouveau membre ajouté !', `${name} (${role}) a été ajouté au podcast.`);
 }
 
 // Charger les snacks au démarrage
