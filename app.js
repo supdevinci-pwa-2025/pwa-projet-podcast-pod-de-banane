@@ -29,6 +29,13 @@ function addMember() {
     displayMembers();
 }
 
+// Charger les snacks au démarrage
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadPodcasts();
+  setupForm();
+  setupServiceWorkerListener();
+});
+
 function displayMembers() {
     const list = document.getElementById("teamList");
     list.innerHTML = "";
@@ -285,8 +292,8 @@ function setupServiceWorkerListener() {
   }
 }
 
-// ============ CHARGEMENT DES SNACKS ============
-async function loadSnacks() {
+// ============ CHARGEMENT DES PODCASTS ============
+async function loadPodcasts() {
   try {
     // Essayer de charger depuis l'API
     const response = await fetch('https://pod-de-banane.web.app/function/members');
