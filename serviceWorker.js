@@ -72,7 +72,7 @@ async function savePendingParticipant(participantData) {
       };
     });
   } catch (error) {
-    console.error('❌ Erreur savePendingSnack:', error);
+    console.error('❌ Erreur savePendingParticipant:', error);
     throw error;
   }
 }
@@ -167,7 +167,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// ============ HANDLE SNACK SUBMISSION ==============
+// ============ HANDLE PARTICIPANT SUBMISSION ==============
 async function handleParticipantSubmission(request) {
   console.log('🔥 handleParticipantSubmission appelée');
   
@@ -188,7 +188,7 @@ async function handleParticipantSubmission(request) {
         role: formData.get('role')
       });
       
-      const snackData = {
+      const participantData = {
         id: Date.now().toString(),
         name: formData.get('name') || formData.get('nom'),
         role: formData.get('role') || formData.get('role'),
@@ -196,9 +196,9 @@ async function handleParticipantSubmission(request) {
         synced: false
       };
       
-      console.log('💾 Données à sauvegarder:', snackData);
+      console.log('💾 Données à sauvegarder:', participantData);
       
-      await savePendingParticipant(snackData);
+      await savePendingParticipant(participantData);
       console.log('✅ savePendingParticipant terminé');
       
       if ('sync' in self.registration) {
@@ -247,7 +247,7 @@ async function syncParticipants() {
         body: JSON.stringify({
           name: participant.name,
           role: participant.role,
-          timestamp: snack.timestamp
+          timestamp: participant.timestamp
         })
       });
       
