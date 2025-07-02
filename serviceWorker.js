@@ -8,6 +8,8 @@ const assets = [
   "./share.html",
   "./Dashboard.html",
   "./app.js",
+  "./functions/members.js",
+  "./functions/share.js",
   "./style.css",
   "./manifest.json",
   "./assets/manifest-icon-192.maskable.png",
