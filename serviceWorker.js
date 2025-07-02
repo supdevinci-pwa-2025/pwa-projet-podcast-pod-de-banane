@@ -189,6 +189,9 @@ self.addEventListener('fetch', event => {
 // ============ HANDLE PARTICIPANT SUBMISSION ==============
 async function handleParticipantSubmission(request) {
   console.log('🔥 handleParticipantSubmission appelée');
+  
+  const contentType = request.headers.get('Content-Type');
+  console.log("🧪 Content-Type reçu:", contentType);
 
   try {
     const response = await fetch(request.clone());
