@@ -143,8 +143,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
 
   console.log('allo Interception fetch:', request.method, url.pathname);
-  console.log(request.method);
-  console.log(url.pathname);
+
   if (request.method === "POST" && url.pathname.includes('/api/pod-banane')) {
     event.respondWith(handleParticipantSubmission(request));
     return;
@@ -214,7 +213,7 @@ async function handleParticipantSubmission(request) {
         synced: false
       };
 
-      console.log('💾 Données à sauvegarder:', snackData);
+      console.log('💾 Données à sauvegarder:', participantData);
 
       await savePendingParticipant(participantData);
       console.log('✅ savePendingParticipant terminé');
@@ -270,7 +269,7 @@ async function syncParticipants() {
     // 2️⃣ Initialisation de compteurs pour suivre succès/échecs
     let success = 0, fail = 0;
     // Tableau pour garder les participants qui n'ont pas pu être synchronisés, avec détail de l'erreur
-    const failedParticipant = [];
+    const failedParticipants = [];
  
     // 3️⃣ Boucle asynchrone pour traiter chaque participant un par un
     for (const participant of pending) {
