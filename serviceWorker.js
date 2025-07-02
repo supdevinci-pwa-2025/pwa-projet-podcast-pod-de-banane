@@ -7,6 +7,8 @@ const assets = [
   "./offline.html",
   "./share.html",
   "./Dashboard.html",
+  "./functions/members.js",
+  "./functions/share.js",
   "./app.js",
   "./style.css",
   "./manifest.json",
@@ -187,7 +189,7 @@ self.addEventListener('fetch', event => {
 // ============ HANDLE PARTICIPANT SUBMISSION ==============
 async function handleParticipantSubmission(request) {
   console.log('🔥 handleParticipantSubmission appelée');
-  
+
   try {
     const response = await fetch(request.clone());
     if (response.ok) {
