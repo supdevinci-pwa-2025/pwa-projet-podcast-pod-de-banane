@@ -1,17 +1,17 @@
 const staticCacheName = "pod-banane-v1";
 
 const assets = [
-    "./",
-    "./index.html",
-    "./open.html",
-    "./offline.html",
-    "./share.html",
-    "./Dashboard.html",
-    "./app.js",
-    "./style.css",
-    "./manifest.json",
-    "./assets/manifest-icon-192.maskable.png",
-    "./assets/manifest-icon-512.maskable.png"
+  "./",
+  "./index.html",
+  "./open.html",
+  "./offline.html",
+  "./share.html",
+  "./Dashboard.html",
+  "./app.js",
+  "./style.css",
+  "./manifest.json",
+  "./assets/manifest-icon-192.maskable.png",
+  "./assets/manifest-icon-512.maskable.png"
 ];
 
 // ============ IndexedDB ==============
@@ -38,7 +38,7 @@ async function getAllPending() {
     const db = await openDB();
     const transaction = db.transaction(['participants'], 'readonly');
     const store = transaction.objectStore('participants');
-    
+
     return new Promise((resolve, reject) => {
       const request = store.getAll();
       request.onsuccess = () => {
@@ -59,7 +59,7 @@ async function savePendingParticipant(participantData) {
     const db = await openDB();
     const transaction = db.transaction(['participants'], 'readwrite');
     const store = transaction.objectStore('participants');
-    
+
     return new Promise((resolve, reject) => {
       const request = store.add(participantData);
       request.onsuccess = () => {
@@ -82,7 +82,7 @@ async function deletePendingParticipant(id) {
     const db = await openDB();
     const transaction = db.transaction(['participants'], 'readwrite');
     const store = transaction.objectStore('participants');
-    
+
     return new Promise((resolve, reject) => {
       const request = store.delete(id);
       request.onsuccess = () => {
@@ -110,85 +110,85 @@ async function notifyClients(type, data) {
 
 // <!-- INSTALL -->
 self.addEventListener('install', event => { // indice: quand le SW est installé
-    console.log(' Service Worker installé');
+  console.log(' Service Worker installé');
 
-    event.waitUntil(
-        caches.open(staticCacheName)
-            .then(cache => cache.addAll(assets))
-            .catch((err) => console.error("Erreur cache install", err))
-    );
+  event.waitUntil(
+    caches.open(staticCacheName)
+      .then(cache => cache.addAll(assets))
+      .catch((err) => console.error("Erreur cache install", err))
+  );
 
-    self.skipWaiting(); // indice: forcer à prendre le contrôle immédiatement
+  self.skipWaiting(); // indice: forcer à prendre le contrôle immédiatement
 });
 
 // <!-- ACTIVATE -->
 self.addEventListener('activate', event => { // indice: quand le SW devient actif
-    console.log(' Service Worker activé');
+  console.log(' Service Worker activé');
 
-    event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(
-                keys.filter(k => k !== staticCacheName).map(k => caches.delete(k))
-            )
-        )
-    );
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.filter(k => k !== staticCacheName).map(k => caches.delete(k))
+      )
+    )
+  );
 
-    self.clients.claim() // indice: prendre le contrôle des pages ouvertes
+  self.clients.claim() // indice: prendre le contrôle des pages ouvertes
 });
 
 
 // <!-- FETCH -->
 self.addEventListener('fetch', event => {
-    const request = event.request;
-    const url = new URL(request.url);
+  const request = event.request;
+  const url = new URL(request.url);
 
-    console.log('allo Interception fetch:', request.method, url.pathname);
+  console.log('allo Interception fetch:', request.method, url.pathname);
+  console.log(request.method === "POST");
+  console.log(url.pathname.includes('/api/pod-banane'));
+  if (request.method === "POST" && url.pathname.includes('/api/pod-banane')) {
+    event.respondWith(handleParticipantSubmission(request));
+    return;
+  }
 
-    if (request.method !== "POST" && url.pathname.includes('/api/pod-banane')) {
-        console.log("test");
-        event.respondWith(handleParticipantSubmission(request));
-        return;
-    }
+  console.log("URL Origin:", url.origin);
+  console.log("Location Origin:", location.origin);
+  console.log("Request Method:", request.method);
 
-    console.log("URL Origin:", url.origin);
-    console.log("Location Origin:", location.origin);
-    console.log("Request Method:", request.method);
+  if (request.method !== "GET" || url.origin !== location.origin) return;
 
-    if (request.method !== "GET" || url.origin !== location.origin) return;
-
-    if (url.pathname === "/" || url.pathname === "/index.html") {
-        event.respondWith(
-            caches.match("./index.html").then(res => res || fetch(request).catch(() => caches.match("./offline.html")))
-        );
-        return;
-    }
-
-    if (url.pathname === "/" || url.pathname === "./Dashboard.html") {
-        event.respondWith(
-            caches.match("./Dashboard.html").then(res => res || fetch(request).catch(() => caches.match("./offline.html")))
-        );
-        return;
-    }
-
+  if (url.pathname === "/" || url.pathname === "/index.html") {
     event.respondWith(
-        caches.match(request)
-            .then(res => res || fetch(request)
-                .then(fetchRes => {
-                    if (fetchRes.ok) {
-                        const resClone = fetchRes.clone();
-                        caches.open(staticCacheName).then(cache => cache.put(request, resClone));
-                    }
-                    return fetchRes;
-                })
-                .catch(() => caches.match('./offline.html'))
-            )
+      caches.match("./index.html").then(res => res || fetch(request).catch(() => caches.match("./offline.html")))
     );
+    return;
+  }
+
+  if (url.pathname === "/" || url.pathname === "./Dashboard.html") {
+    event.respondWith(
+      caches.match("./Dashboard.html").then(res => res || fetch(request).catch(() => caches.match("./offline.html")))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request)
+      .then(res => res || fetch(request)
+        .then(fetchRes => {
+          if (fetchRes.ok) {
+            const resClone = fetchRes.clone();
+            caches.open(staticCacheName).then(cache => cache.put(request, resClone));
+          }
+          return fetchRes;
+        })
+        .catch(() => caches.match('./offline.html'))
+      )
+  );
 });
 
 // ============ HANDLE PARTICIPANT SUBMISSION ==============
 async function handleParticipantSubmission(request) {
   console.log('🔥 handleParticipantSubmission appelée');
-  
+
   try {
     const response = await fetch(request.clone());
     if (response.ok) {
@@ -198,14 +198,14 @@ async function handleParticipantSubmission(request) {
     throw new Error(`Erreur ${response.status}`);
   } catch (error) {
     console.log('📱 Mode hors ligne détecté, sauvegarde locale...');
-    
+
     try {
       const formData = await request.formData();
       console.log('📝 FormData récupérée:', {
         name: formData.get('name'),
         role: formData.get('role')
       });
-      
+
       const participantData = {
         id: Date.now().toString(),
         name: formData.get('name') || formData.get('participant'),
@@ -213,20 +213,20 @@ async function handleParticipantSubmission(request) {
         timestamp: new Date().toISOString(),
         synced: false
       };
-      
+
       console.log('💾 Données à sauvegarder:', snackData);
-      
+
       await savePendingParticipant(participantData);
       console.log('✅ savePendingParticipant terminé');
-      
+
       if ('sync' in self.registration) {
         await self.registration.sync.register('sync-participant');
         console.log('🔄 Background sync enregistré');
       }
-      
+
       await notifyClients('participant-saved-offline', participantData);
       console.log('📱 Clients notifiés');
-      
+
       return new Response(JSON.stringify({
         success: true,
         offline: true,
@@ -235,7 +235,7 @@ async function handleParticipantSubmission(request) {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
-      
+
     } catch (saveError) {
       console.error('❌ Erreur lors de la sauvegarde:', saveError);
       throw saveError;
@@ -245,23 +245,23 @@ async function handleParticipantSubmission(request) {
 
 // <!-- SYNCHRONISATION -->
 self.addEventListener('sync', (event) => {
-    console.log('📡 Sync déclenchée pour:', event.tag);
-    if (event.tag === 'sync-participant') { // indice: le même tag que plus haut
-        event.waitUntil(syncParticipants()); // indice: dire "attends la fin de cette promesse"
-    }
+  console.log('📡 Sync déclenchée pour:', event.tag);
+  if (event.tag === 'sync-participant') { // indice: le même tag que plus haut
+    event.waitUntil(syncParticipants()); // indice: dire "attends la fin de cette promesse"
+  }
 });
 
 async function syncParticipants() {
   const pending = await getAllPending();
   console.log(`🔄 Tentative de sync de ${pending.length} participants`);
-  
+
   for (const participant of pending) {
     try {
       const response = await fetch('https://pod-de-banane.web.app/functions/members', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Accept': 'application/json' 
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           name: participant.name,
@@ -269,7 +269,7 @@ async function syncParticipants() {
           timestamp: participant.timestamp
         })
       });
-      
+
       if (response.ok) {
         await deletePendingParticpant(participant.id);
         await notifyClients('participant-synced', participant);
