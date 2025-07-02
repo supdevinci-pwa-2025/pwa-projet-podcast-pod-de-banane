@@ -101,5 +101,19 @@
         }
       ]
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/screenshot-1",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Home screen"
+    },
+    {
+      "src": "/assets/screenshot-2",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Home screen"
+    }
   ]
 }
