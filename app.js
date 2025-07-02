@@ -1,7 +1,7 @@
-let members = JSON.parse(localStorage.getItem("podcastMembers")) || [];
-
 // app.js - Version finale avec import idb.js
-import {addParticipant, getAllParticipants } from './idb.js';
+// import {addParticipant, getAllParticipants } from './idb.js';
+
+let members = JSON.parse(localStorage.getItem("podcastMembers")) || [];
 
 
 // Charger les snacks au démarrage
