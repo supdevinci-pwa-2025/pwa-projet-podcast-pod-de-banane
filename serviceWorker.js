@@ -270,14 +270,14 @@ async function syncParticipants() {
       });
       
       if (response.ok) {
-        await deletePendingParticpant(participants.id);
-        await notifyClients('participant-synced', participants);
-        console.log('✅ Participant synchronisé:', participants.name);
+        await deletePendingParticpant(participant.id);
+        await notifyClients('participant-synced', participant);
+        console.log('✅ Participant synchronisé:', participant.name);
       } else {
-        console.error(`❌ Erreur sync ${participants.name}: ${response.status}`);
+        console.error(`❌ Erreur sync ${participant.name}: ${response.status}`);
       }
     } catch (err) {
-      console.error(`❌ Sync failed for ${participants.name}:`, err);
+      console.error(`❌ Sync failed for ${participant.name}:`, err);
     }
   }
 }
