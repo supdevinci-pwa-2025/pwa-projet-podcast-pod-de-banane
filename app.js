@@ -372,3 +372,26 @@ function showMessage(message, type = 'info') {
     notification.remove();
   }, 3000);
 }
+
+
+function askNotificationPermission() {
+  if (!('Notification' in window)) return;
+
+  Notification.requestPermission().then(permission => {
+    if (permission === 'granted') {
+      console.log("🔔 Notifications autorisées !");
+    } else {
+      console.warn("❌ Notifications refusées.");
+    }
+  });
+}
+
+function showNotification(title, body) {
+  if (Notification.permission === 'granted') {
+    new Notification(title, {
+      body: body,
+      icon: "./assets/manifest-icon-192.maskable.png",
+      badge: "./assets/manifest-icon-192.maskable.png"
+    });
+  }
+}
