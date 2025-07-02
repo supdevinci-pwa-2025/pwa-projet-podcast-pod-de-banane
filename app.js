@@ -40,6 +40,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupServiceWorkerListener();
 });
 
+function addMember() {
+    const nameInput = document.getElementById("memberName");
+    const roleInput = document.getElementById("memberRole");
+    const name = nameInput.value.trim();
+    const role = roleInput.value;
+
+    if (name === "") {
+        alert("Veuillez entrer un nom.");
+        return;
+    }
+
+    const newMember = { name, role };
+    members.push(newMember);
+    localStorage.setItem("podcastMembers", JSON.stringify(members));
+    nameInput.value = "";
+    displayMembers();
+
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.push({
+        type: 'show-notification',
+        data: {
+          title: 'Nouveau membre ajouté !',
+          body: `${name} (${role}) a été ajouté au podcast.`
+        }
+      });
+    }
+}
+
 // ============ GESTION DU FORMULAIRE ============
 function setupForm() {
   const form = document.querySelector('#participant-form');
