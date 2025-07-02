@@ -291,7 +291,7 @@ function setupServiceWorkerListener() {
 async function loadPodcasts() {
   try {
     // Essayer de charger depuis l'API
-    const response = await fetch('https://pod-de-banane.web.app/functions/members');
+    const response = await fetch('/api/pod-banane');
     
     if (response.ok) {
       const data = await response.json();
