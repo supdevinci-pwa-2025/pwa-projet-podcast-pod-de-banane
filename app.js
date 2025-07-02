@@ -94,7 +94,7 @@ async function syncPodcasts() {
     for (const participant of pending) {
       try {
         console.log('🚀 Tentative de synchro pour :', participant.name);
- 
+
         // Récupération de l'URL de l'API via une fonction dédiée pour gérer différents environnements (local, prod...)
         const apiUrl = getApiUrl();
         console.log('🌐 URL API utilisée:', apiUrl);
@@ -207,4 +207,140 @@ function getApiUrl() {
   }
   // Sinon on retourne une URL de production fixe (exemple : site Netlify principal)
   return 'https://pod-de-banane.web.app/functions/members';
+}
+
+
+
+// ============ GESTION DU FORMULAIRE ============
+function setupForm() {
+  const form = document.querySelector('#participants-form');
+  
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.querySelector('#participant-name').value.trim();
+    const mood = document.querySelector('#participant-role').value.trim();
+    
+    if (!name || !role) {
+      alert('Veuillez remplir tous les champs');
+      return;
+    }
+
+    console.log('📝 Envoi du snack:', { name, role });
+    
+    try {
+      // Créer FormData pour l'envoi
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('role', role);
+      
+      // Envoyer vers l'API (intercepté par le SW si hors ligne)
+      const response = await fetch('/api/pod-banane', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      console.log('✅ Réponse:', result);
+      
+      if (result.offline) {
+        showMessage('📱 Podcast sauvegardé hors ligne !', 'warning');
+      } else {
+        showMessage('✅ Podcast ajouté avec succès !', 'success');
+        // Ajouter à la liste locale immédiatement
+        addSnackToUI(name, role);
+      }
+      
+      form.reset();
+      
+    } catch (error) {
+      console.error('❌ Erreur soumission:', error);
+      showMessage('❌ Erreur lors de l\'ajout', 'error');
+    }
+  });
+}
+
+
+// ============ ÉCOUTER LES MESSAGES DU SERVICE WORKER ============
+function setupServiceWorkerListener() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      const { type, data } = event.data;
+      
+      console.log('📱 Message du SW:', type, data);
+      
+      switch (type) {
+        case 'participant-saved-offline':
+          console.log('📱 Participant sauvegardé hors ligne:', data);
+          addSnackToUI(data.name, data.role);
+          showMessage(`📱 ${data.name} sauvegardé hors ligne`, 'warning');
+          break;
+          
+        case 'participant-synced':
+          console.log('🔄 Participant synchronisé:', data);
+          showMessage(`🔄 ${data.name} synchronisé !`, 'success');
+          break;
+      }
+    });
+  }
+}
+
+// ============ CHARGEMENT DES SNACKS ============
+async function loadSnacks() {
+  try {
+    // Essayer de charger depuis l'API
+    const response = await fetch('https://pod-de-banane.web.app/function/members');
+    
+    if (response.ok) {
+      const data = await response.json();
+      members = data.members || [];
+      console.log('✅ Participants chargés depuis l\'API:', members.length);
+    } else {
+      throw new Error('API non disponible');
+    }
+  } catch (error) {
+    console.log('📱 API non disponible, chargement depuis localStorage');
+    // Fallback sur localStorage
+    members = JSON.parse(localStorage.getItem('members')) || [];
+  }
+  
+  // Afficher les snacks
+  members.forEach(member => addSnackToUI(member.name, member.role));
+}
+
+// ============ AFFICHAGE UI ============
+function addSnackToUI(name, role) {
+  const li = document.createElement('li');
+  li.textContent = `🍪 ${name} (${role})`;
+  li.className = 'member-item';
+  memberList.appendChild(li);
+}
+
+function showMessage(message, type = 'info') {
+  // Créer un élément de notification
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  
+  // Styles basiques
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    z-index: 1000;
+    ${type === 'success' ? 'background: #4CAF50;' : ''}
+    ${type === 'warning' ? 'background: #FF9800;' : ''}
+    ${type === 'error' ? 'background: #f44336;' : ''}
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Supprimer après 3 secondes
+  setTimeout(() => {
+    notification.remove();
+  }, 3000);
 }
