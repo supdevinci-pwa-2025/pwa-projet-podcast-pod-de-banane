@@ -245,7 +245,7 @@ async function handleParticipantSubmission(request) {
 // <!-- SYNCHRONISATION -->
 self.addEventListener('sync', (event) => {
     console.log('📡 Sync déclenchée pour:', event.tag);
-    if (event.tag === 'sync-podcasts') { // indice: le même tag que plus haut
+    if (event.tag === 'sync-participant') { // indice: le même tag que plus haut
         event.waitUntil(syncParticipants()); // indice: dire "attends la fin de cette promesse"
     }
 });

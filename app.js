@@ -64,7 +64,7 @@ displayMembers();
 
 // SYNCHRONISATION
 navigator.serviceWorker.ready.then(reg => {
-  reg.sync.register('sync-podcasts') // indice: méthode pour enregistrer une sync
+  reg.sync.register('sync-participant') // indice: méthode pour enregistrer une sync
     .then(() => console.log('📡 Sync enregistrée'))
     .catch(err => console.error('❌ Erreur sync:', err));
 });
